@@ -597,6 +597,9 @@ llava_series = {
     "llava_onevision_qwen2_72b_ov": partial(
         LLaVA_OneVision, model_path="lmms-lab/llava-onevision-qwen2-72b-ov-sft"
     ),
+    "llava_onevision_qwen2_0.5b_si_hf_onnx": partial(
+        LLaVA_OneVision_ONNX, model_path="llava-hf/llava-onevision-qwen2-0.5b-si-hf/onnx"
+    ),
     "Aquila-VL-2B": partial(LLaVA_OneVision, model_path="BAAI/Aquila-VL-2B-llava-qwen"),
     "llava_video_qwen2_7b": partial(
         LLaVA_OneVision, model_path="lmms-lab/LLaVA-Video-7B-Qwen2"

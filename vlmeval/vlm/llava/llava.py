@@ -9,6 +9,10 @@ from ...dataset import DATASET_TYPE, DATASET_MODALITY
 import copy
 import requests
 
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")))
+from LlaVaONNXRunner import VisionLanguageModelONNX
+
 
 class LLaVA(BaseModel):
 
@@ -888,6 +892,61 @@ class LLaVA_OneVision_HF(BaseModel):
         video_time = total_frame_num / avg_fps
 
         return video_frames, frame_time_str, video_time
+
+    def generate_inner(self, message, dataset=None):
+        if DATASET_MODALITY(dataset) == "VIDEO":
+            return self.generate_inner_video(message, dataset)
+        else:
+            return self.generate_inner_image(message, dataset)
+
+
+class LLaVA_OneVision_ONNX(BaseModel):
+    INSTALL_REQ = True
+    INTERLEAVE = True
+    VIDEO_LLM = True
+
+    GPU_ID = 0
+
+    # --- Quantization Settings ---
+    Q_EMBED = "q4f16"
+    Q_VISION = "fp16"
+    Q_DECODER = "q4f16"
+
+    # --- Decoding Settings ---
+    DECODING_STRATEGY = "beam"
+    NUM_BEAMS = 4
+
+    def __init__(self, model_path="llava-hf/llava-onevision-qwen2-0.5b-si-hf/onnx", **kwargs):
+        self.model = VisionLanguageModelONNX(
+            base_model_dir=model_path,
+            quant_type_embed=self.Q_EMBED,
+            quant_type_vision=self.Q_VISION,
+            quant_type_decoder=self.Q_DECODER,
+            ort_providers=[('CUDAExecutionProvider', {'device_id': str(self.GPU_ID)}), 'CPUExecutionProvider']
+        )
+
+    def generate_inner_image(self, message, dataset=None):
+        content, images = "", []
+
+        for msg in message:
+            if msg["type"] == "text":
+                content += msg["value"]
+            elif msg["type"] == "image":
+                img = Image.open(msg["value"]).convert("RGB")
+                images.append(img)
+
+        generated_text, _ = self.model.generate(
+            inputs=images,
+            user_prompt=content,
+            input_type='image',
+            decoding_strategy=self.DECODING_STRATEGY,
+            num_beams=self.NUM_BEAMS
+        )
+
+        return generated_text
+
+    def generate_inner_video(self, message, dataset=None):
+        raise NotImplementedError("LLaVA_OneVision_ONNX does not support video generation.")
 
     def generate_inner(self, message, dataset=None):
         if DATASET_MODALITY(dataset) == "VIDEO":
