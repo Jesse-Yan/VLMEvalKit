@@ -941,7 +941,7 @@ class LLaVA_OneVision_ONNX(BaseModel):
             if msg["type"] == "text":
                 content += msg["value"]
             elif msg["type"] == "image":
-                img = Image.open(msg["value"]).convert("RGB")
+                img = msg["value"]
                 images.append(img)
 
         generated_text, _ = self.model.generate(
