@@ -917,12 +917,21 @@ class LLaVA_OneVision_ONNX(BaseModel):
     NUM_BEAMS = 4
 
     def __init__(self, model_path="llava-hf/llava-onevision-qwen2-0.5b-si-hf/onnx", **kwargs):
+        self.model_path = model_path
+        self.GPU_ID = kwargs.get("gpu_id", self.GPU_ID)
+        self.Q_EMBED = kwargs.get("q_embed", self.Q_EMBED)
+        self.Q_VISION = kwargs.get("q_vision", self.Q_VISION)
+        self.Q_DECODER = kwargs.get("q_decoder", self.Q_DECODER)
+
+        self.DECODING_STRATEGY = kwargs.get("decoding_strategy", self.DECODING_STRATEGY)
+        self.NUM_BEAMS = kwargs.get("num_beams", self.NUM_BEAMS)
+
         self.model = VisionLanguageModelONNX(
             base_model_dir=model_path,
             quant_type_embed=self.Q_EMBED,
             quant_type_vision=self.Q_VISION,
             quant_type_decoder=self.Q_DECODER,
-            ort_providers=[('CUDAExecutionProvider', {'device_id': str(self.GPU_ID)}), 'CPUExecutionProvider']
+            ort_providers=['CUDAExecutionProvider', 'CPUExecutionProvider']
         )
 
     def generate_inner_image(self, message, dataset=None):
